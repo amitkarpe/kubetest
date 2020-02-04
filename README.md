@@ -1,0 +1,2 @@
+# kubetest
+Kubernetes setup testing
