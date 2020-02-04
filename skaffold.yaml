@@ -1,0 +1,23 @@
+apiVersion: skaffold/v2alpha2
+kind: Config
+metadata:
+  name: nginx-
+build:
+  artifacts:
+    - image: amitkarpe/nginx
+  tagPolicy:
+    sha256: {}
+  local:
+    push: false
+    useBuildkit: false 
+    useDockerCLI: false
+deploy:
+  kubectl:
+    manifests:
+      - k8s-pod.yaml
+profiles:
+  - build:
+      googleCloudBuild:
+        projectId: genuine-energy-264308
+    deploy: {}
+    name: GKE
