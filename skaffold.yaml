@@ -9,15 +9,9 @@ build:
     sha256: {}
   local:
     push: false
-    useBuildkit: false 
+    useBuildkit: true
     useDockerCLI: false
 deploy:
   kubectl:
     manifests:
       - k8s-pod.yaml
-profiles:
-  - build:
-      googleCloudBuild:
-        projectId: genuine-energy-264308
-    deploy: {}
-    name: GKE
