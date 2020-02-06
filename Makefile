@@ -1,22 +1,34 @@
 image = 'amitkarpe/nginx'
 port = '80'
 ns = 'kubetest'
+
 all: build push run test
-build:
-	docker build -t $(image) .
-push:
+
+docker: docker-build docker-push docker-run docker-test
+
+dev: 
+	skaffold dev -n $(ns)
+
+run: 
+	skaffold run -n $(ns)
+	curl $$(minikube service kubetest -n kubetest  --url)
+
+docker-build:
+	DOCKER_BUILDKIT=1 docker build -t $(image) .
+
+docker-push:
 	docker push $(image)
 #	docker login -u amitkarpe -p XXXXXXX
 
-run:
+docker-run:
 	docker stop nginx | echo "" | sleep 5
 	docker run --rm --name nginx -p $(port):80 -d $(image)
 
-test:
+docker-test:
 	#curl -s localhost:$(port)
 	docker exec -it nginx curl localhost
 
-clean:
+docker-clean:
 	docker image rm -f $(image)
 
 set-namespace:
@@ -24,16 +36,21 @@ set-namespace:
 	@kubectl config set-context --current --namespace=kubetest
 	@echo "\033[92mSet namespace as $(ns)\033[0m"
 
-k8s-deploy: set-namespace
+k8s: set-namespace k8s-deploy k8s-test
+
+k8s-deploy: 
 	@echo ""
-#	$col_yellow
-	kubectl run nginx --image=$(image) --port 80 --expose -n $(ns) | true
+	kubectl run kubetest --image=$(image) --port 80 --expose -n $(ns) | true
 	@echo ""
-	@sleep 2
+	@sleep 5
 	@echo "\033[92mGet objects details\033[0m"
 	@echo ""
 	kubectl get ep,svc,deploy,pod -o wide -n $(ns)
 	@echo ""
+
+k8s-test:
+	kubectl patch svc kubetest -p '{"spec":{"type":"NodePort"}}'
+	curl $$(minikube service kubetest -n kubetest  --url)
 delete-all:
 	docker image rm -f $(image)
 	kubectl delete all --all -n $(ns)

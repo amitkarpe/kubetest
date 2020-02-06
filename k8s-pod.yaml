@@ -4,7 +4,7 @@ metadata:
   labels:
       app: nginx
       tool: skaffold
-  name: frontend
+  name: kubetest
 spec:
   ports:
   - port: 80
@@ -12,34 +12,28 @@ spec:
     targetPort: 80
   type: NodePort
   selector:
-    run: frontend
-status:
-  loadBalancer: {}
----
+    run: kubetest
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
   labels:
-    run: frontend
-  name: frontend
+    run: kubetest
+  name: kubetest
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: frontend
+      run: kubetest
   strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
-        run: frontend
+        run: kubetest
     spec:
       containers:
-      - image: amitkarpe/nginx
-        name: frontend
+      - image: amitkarpe/nginx:latest
+        imagePullPolicy: Never
+        name: kubetest
         ports:
         - containerPort: 80
-        resources: {}
-status: {}
