@@ -51,6 +51,7 @@ k8s-deploy:
 k8s-test:
 	kubectl patch svc kubetest -p '{"spec":{"type":"NodePort"}}'
 	curl $$(minikube service kubetest -n kubetest  --url)
+
 delete-all:
 	docker image rm -f $(image)
 	kubectl delete all --all -n $(ns)
