@@ -50,6 +50,8 @@ k8s-deploy:
 
 k8s-test:
 	kubectl patch svc kubetest -p '{"spec":{"type":"NodePort"}}'
+	sleep 3
+	@echo ""
 	curl $$(minikube service kubetest -n kubetest  --url)
 
 delete-all:
