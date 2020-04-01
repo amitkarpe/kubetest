@@ -40,7 +40,7 @@ k8s: set-namespace k8s-deploy k8s-test
 
 k8s-deploy: 
 	@echo ""
-	kubectl run kubetest --image=$(image) --port 80 --expose -n $(ns) | true
+	kubectl run kubetest --generator=run-pod/v1 --image=$(image) --port 80 --expose -n $(ns) | true
 	@echo ""
 	@sleep 5
 	@echo "\033[92mGet objects details\033[0m"
@@ -50,7 +50,7 @@ k8s-deploy:
 
 k8s-test:
 	kubectl patch svc kubetest -p '{"spec":{"type":"NodePort"}}'
-	sleep 3
+	sleep 5
 	@echo ""
 	curl $$(minikube service kubetest -n kubetest  --url)
 
