@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - image: amitkarpe/nginx:latest
-        imagePullPolicy: Never
+#        imagePullPolicy: Never
         name: kubetest
         ports:
         - containerPort: 80
