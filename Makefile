@@ -2,9 +2,10 @@ image = 'amitkarpe/nginx'
 port = '80'
 ns = 'kubetest'
 
-all: build push run test
 
 docker: docker-build docker-push docker-run docker-test
+
+all: build push run test
 
 dev: 
 	skaffold dev -n $(ns)
