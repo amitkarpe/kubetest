@@ -8,9 +8,10 @@ build:
   tagPolicy:
     sha256: {}
   local:
-    push: false
+#    push: false
     useBuildkit: true
     useDockerCLI: true
+    push: true
 deploy:
   kubectl:
     manifests:
