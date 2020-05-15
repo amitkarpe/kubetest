@@ -6,6 +6,7 @@ metadata:
   labels:
       app: nginx
       tool: skaffold
+      run: kubetest
   name: kubetest
 spec:
   ports:
