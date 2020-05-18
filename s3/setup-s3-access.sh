@@ -13,7 +13,7 @@ then
 	aws s3api create-bucket --bucket ${s3_bucket_name}  --region $AWS_DEFAULT_REGION \
 	--create-bucket-configuration LocationConstraint=${AWS_DEFAULT_REGION} 
 #	--acl private;
-	echo "test" > test; aws s3 cp test s3://${s3_bucket_name}/;
+	echo "test 1" > test; aws s3 cp test s3://${s3_bucket_name}/;
 fi
 echo ""
 
@@ -29,7 +29,7 @@ read -r -d '' TRUST_RELATIONSHIP <<EOF
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${ns}:${service_account}"
+          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${ns}:*"
         }
       }
     }
@@ -90,7 +90,7 @@ echo ""
 
 echo "Annotate serviceaccount"; kubectl get sa -n ${ns} ${service_account}  -o yaml | grep annotations -A 1
 echo "kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${policy_name} --overwrite"
-kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${policy_name} --overwrite; echo ""
+kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo ""
 
 export cmd="aws s3 ls --recursive s3://${s3_bucket_name}/"; export POD=$(kubectl get pods -l "run=${app}" -o jsonpath="{.items[0].metadata.name}"); kubectl exec -it $POD -- $cmd
 
