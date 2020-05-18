@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: s3
+    app: s3
+  name: s3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: s3
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        run: s3
+    spec:
+      containers:
+      - image: amitkarpe/skaffold:latest
+#        imagePullPolicy: Never
+        name: aws
