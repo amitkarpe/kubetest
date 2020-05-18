@@ -1,3 +1,7 @@
+# JSON files
+trust.json
+policy.json
+
 # Logs
 logs
 *.log
