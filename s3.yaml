@@ -21,8 +21,8 @@ spec:
       labels:
         run: s3
     spec:
-      containers:
       serviceAccountName: s3
+      containers:
       - image: amitkarpe/skaffold:latest
 #        imagePullPolicy: Never
         name: aws
