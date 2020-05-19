@@ -1,6 +1,7 @@
 # JSON files
 trust.json
 policy.json
+.setup
 
 # Logs
 logs
