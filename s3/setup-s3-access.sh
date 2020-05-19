@@ -2,6 +2,7 @@
 
 echo "Set/Export all ENV variable from .env file"
 export $(grep -v '^#' .env | xargs);
+
 export OIDC_PROVIDER=$(aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///"); echo OIDC_PROVIDER - $OIDC_PROVIDER; echo "";
 #echo "associate-iam-oidc-provider with cluster"; aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer"; eksctl utils associate-iam-oidc-provider --cluster $cluster --approve; echo "";
 
@@ -80,6 +81,7 @@ echo ""
 
 kubectl get deployment s3;
 kubectl apply -f ../kubetest/s3.yaml
+kubectl apply -f ../s3.yaml
 if [[ $? != 0 ]];
 then 
 	echo "Deploy s3 deployment into cluster"; kubectl apply -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
