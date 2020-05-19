@@ -2,50 +2,26 @@
 
 echo "Set/Export all ENV variable from .env file"
 export $(grep -v '^#' .env | xargs);
-
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 export OIDC_PROVIDER=$(aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///"); echo OIDC_PROVIDER - $OIDC_PROVIDER; echo "";
-#echo "associate-iam-oidc-provider with cluster"; aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer"; eksctl utils associate-iam-oidc-provider --cluster $cluster --approve; echo "";
 
-echo ""
-echo "List bucket $s3_bucket_name"; aws s3 ls s3://${s3_bucket_name}; 
-if [[ $? != 0 ]];
-then 
-	echo "Creating s3 bucket - $s3_bucket_name";
-	aws s3api create-bucket --bucket ${s3_bucket_name}  --region $AWS_DEFAULT_REGION \
-	--create-bucket-configuration LocationConstraint=${AWS_DEFAULT_REGION} 
-#	--acl private;
-	echo "test 1" > test; aws s3 cp test s3://${s3_bucket_name}/;
-fi
-echo ""
-
-read -r -d '' TRUST_RELATIONSHIP <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${ns}:*"
-        }
-      }
-    }
-  ]
-}
-EOF
-
-echo "Get role name"
-aws iam get-role --role-name $role_name;
-if [[ $? != 0 ]];
+if [[ ! -f .setup ]];
 then
-	echo "${TRUST_RELATIONSHIP}" > trust.json; cat trust.json| jq
-	echo "create role - $role_name"; aws iam create-role --role-name ${role_name} --assume-role-policy-document file://trust.json --description "eks to s3 access role";
+	kubectl create ns $ns; kubens $ns;
+	echo "associate-iam-oidc-provider with cluster"; aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer"; eksctl utils associate-iam-oidc-provider --cluster $cluster --approve; echo "";
+
+	echo ""; echo ${s3_bucket_name}
+	echo "List bucket $s3_bucket_name"; aws s3 ls s3://${s3_bucket_name}; 
+	if [[ $? != 0 ]];
+	then 
+		echo "Creating s3 bucket - $s3_bucket_name";
+		echo $AWS_DEFAULT_REGION
+		aws s3api create-bucket --bucket ${s3_bucket_name} --region ${AWS_DEFAULT_REGION} --create-bucket-configuration LocationConstraint=${AWS_DEFAULT_REGION}
+		echo "test 1" > test; aws s3 cp test s3://${s3_bucket_name}/;
+	fi
+	echo ""
+	echo date - $(date) > .setup; cat .setup;
 fi
-echo ""
 
 read -r -d '' POLICY <<EOF
 {
@@ -70,30 +46,70 @@ then
 fi
 echo ""
 
-echo "Get list-attached-role-policies"
-aws iam list-attached-role-policies --role-name ${role_name} | grep $policy_name
+read -r -d '' TRUST_RELATIONSHIP <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${ns}:${service_account}"
+        }
+      }
+    }
+  ]
+}
+EOF
+
+echo "Get role name"
+aws iam get-role --role-name $role_name;
 if [[ $? != 0 ]];
-then 
-	echo "attach role - $role_name to policy - $policy_name"; aws iam attach-role-policy --role-name ${role_name} --policy-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${policy_name}
+then
+	echo "${TRUST_RELATIONSHIP}" > trust.json; cat trust.json| jq
+	echo "creating role - $role_name"; aws iam create-role --role-name ${role_name} --assume-role-policy-document file://trust.json --description "eks to s3 access role";
 fi
 echo ""
 
+sleep 5;
+echo "Get list-attached-role-policies"
+aws iam list-attached-role-policies --role-name ${role_name} | grep $policy_name
+echo "attaching role - $role_name to policy - $policy_name"; 
+aws iam attach-role-policy --role-name ${role_name} --policy-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${policy_name}
+echo ""
+aws iam list-attached-role-policies --role-name ${role_name} | grep $policy_name
+aws iam list-attached-role-policies --role-name ${role_name} | jq
+echo ""
+
+
+kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo ""
 
 kubectl get deployment s3;
-kubectl apply -f ../kubetest/s3.yaml
-kubectl apply -f ../s3.yaml
+#kubectl apply -f ../kubetest/s3.yaml
+#kubectl apply -f ../s3.yaml
+echo "Deploy s3 deployment into cluster"; 
+kubectl replace -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
 if [[ $? != 0 ]];
 then 
+	echo THEN
 	echo "Deploy s3 deployment into cluster"; kubectl apply -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
-#else	
+else	
+	echo ELSE
 #	kubectl delete pod -l run=s3
+#	kubectl rollout restart deployment s3
 fi
 echo ""
 
 echo "Annotate serviceaccount"; kubectl get sa -n ${ns} ${service_account}  -o yaml | grep annotations -A 1
 echo "kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${policy_name} --overwrite"
 kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo ""
+kubectl delete pod -l run=s3
+sleep 5;
+kubectl get pod -l run=s3 -o yaml | grep AWS -A2
 
 export cmd="aws s3 ls --recursive s3://${s3_bucket_name}/"; export POD=$(kubectl get pods -l "run=${app}" -o jsonpath="{.items[0].metadata.name}"); kubectl exec -it $POD -- $cmd
-
 
