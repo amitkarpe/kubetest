@@ -17,7 +17,7 @@ then
 		echo "Creating s3 bucket - $s3_bucket_name";
 		echo $AWS_DEFAULT_REGION
 		aws s3api create-bucket --bucket ${s3_bucket_name} --region ${AWS_DEFAULT_REGION} --create-bucket-configuration LocationConstraint=${AWS_DEFAULT_REGION}
-		echo "test 1" > test; aws s3 cp test s3://${s3_bucket_name}/;
+		echo "test $(date)" > test; aws s3 cp test s3://${s3_bucket_name} --region ${AWS_DEFAULT_REGION};
 	fi
 	echo ""
 	echo date - $(date) > .setup; cat .setup;
@@ -111,5 +111,7 @@ kubectl delete pod -l run=s3
 sleep 5;
 kubectl get pod -l run=s3 -o yaml | grep AWS -A2
 
-export cmd="aws s3 ls --recursive s3://${s3_bucket_name}/"; export POD=$(kubectl get pods -l "run=${app}" -o jsonpath="{.items[0].metadata.name}"); kubectl exec -it $POD -- $cmd
+export url="s3://${s3_bucket_name}"
+export cmd="aws s3 ls ${url}"
+export POD=$(kubectl get pods -l "run=${app}" -o jsonpath="{.items[0].metadata.name}"); kubectl exec -it $POD -- ${cmd}
 
