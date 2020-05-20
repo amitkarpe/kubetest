@@ -7,7 +7,7 @@ export OIDC_PROVIDER=$(aws eks describe-cluster --name $cluster --query "cluster
 
 if [[ ! -f .setup ]];
 then
-	kubectl create ns $ns; kubectl set-context --current --namespace $ns;
+	kubectl create ns $ns; kubectl config set-context --current --namespace $ns;
 	echo "associate-iam-oidc-provider with cluster"; aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer"; eksctl utils associate-iam-oidc-provider --cluster $cluster --approve; echo "";
 
 	echo ""; echo ${s3_bucket_name}
@@ -16,7 +16,8 @@ then
 	then 
 		echo "Creating s3 bucket - $s3_bucket_name";
 		echo $AWS_DEFAULT_REGION
-		aws s3api create-bucket --bucket ${s3_bucket_name} --region ${AWS_DEFAULT_REGION} --create-bucket-configuration LocationConstraint=${AWS_DEFAULT_REGION}
+		#aws s3api create-bucket --bucket ${s3_bucket_name} --region ${AWS_DEFAULT_REGION} --create-bucket-configuration LocationConstraint=${AWS_DEFAULT_REGION}
+		aws s3api create-bucket --bucket ${s3_bucket_name} --region ${AWS_DEFAULT_REGION} 
 		echo "test $(date)" > test; aws s3 cp test s3://${s3_bucket_name} --region ${AWS_DEFAULT_REGION};
 	fi
 	echo ""
