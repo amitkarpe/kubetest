@@ -92,13 +92,13 @@ kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/ro
 echo "Deploy s3 deployment into cluster"; 
 kubectl get deployment s3;
 kubectl apply -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/sa-s3.yaml;
-echo "Annotate serviceaccount"; kubectl get sa -n ${ns} ${service_account}  -o yaml | grep annotations -A 1
-echo "kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${policy_name} --overwrite"
-kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo ""
+echo "Annotate serviceaccount"; kubectl get sa -n ${ns} ${service_account}  -o yaml | grep annotations -A 1;
+echo "kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${policy_name} --overwrite";
+kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo "";
 kubectl replace -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
 #kubectl delete pod -l run=s3
 sleep 2;
-kubectl get pod -l run=s3 -o yaml | grep AWS -A2
+kubectl get pod -l run=s3 -o yaml | grep AWS -A2;
 
 export url="s3://${s3_bucket_name}"
 export cmd="aws s3 ls ${url}"

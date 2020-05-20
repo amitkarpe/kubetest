@@ -1,0 +1,9 @@
+cluster=qa-internet
+s3_bucket_name=s3-qa-frontendapi-write
+AWS_DEFAULT_REGION=ap-southeast-1
+ns=frontend
+app=s3
+service_account=s3
+role_name=qa-eks-s3-access-role
+policy_name=qa-eks-s3-access-policy
+AWS_PAGER=""
