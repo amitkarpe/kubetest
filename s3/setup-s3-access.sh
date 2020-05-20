@@ -2,12 +2,12 @@
 
 echo "Set/Export all ENV variable from .env file"
 export $(grep -v '^#' .env | xargs);
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text); echo $AWS_ACCOUNT_ID;
 export OIDC_PROVIDER=$(aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///"); echo OIDC_PROVIDER - $OIDC_PROVIDER; echo "";
 
 if [[ ! -f .setup ]];
 then
-	kubectl create ns $ns; kubens $ns;
+	kubectl create ns $ns; kubectl set-context --current --namespace $ns;
 	echo "associate-iam-oidc-provider with cluster"; aws eks describe-cluster --name $cluster --query "cluster.identity.oidc.issuer"; eksctl utils associate-iam-oidc-provider --cluster $cluster --approve; echo "";
 
 	echo ""; echo ${s3_bucket_name}
@@ -88,11 +88,9 @@ echo ""
 
 kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo ""
 
-kubectl get deployment s3;
-#kubectl apply -f ../kubetest/s3.yaml
-#kubectl apply -f ../s3.yaml
 echo "Deploy s3 deployment into cluster"; 
-kubectl replace -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
+kubectl get deployment s3;
+#kubectl replace -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
 if [[ $? != 0 ]];
 then 
 	echo THEN
