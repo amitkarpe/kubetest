@@ -76,7 +76,7 @@ then
 fi
 echo ""
 
-sleep 5;
+sleep 22;
 echo "Get list-attached-role-policies"
 aws iam list-attached-role-policies --role-name ${role_name} | grep $policy_name
 echo "attaching role - $role_name to policy - $policy_name"; 
@@ -97,7 +97,7 @@ echo "kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.
 kubectl annotate serviceaccount -n ${ns} ${service_account} eks.amazonaws.com/role-arn=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name} --overwrite; echo ""
 kubectl replace -f https://raw.githubusercontent.com/amitkarpe/kubetest/master/s3.yaml; 
 #kubectl delete pod -l run=s3
-sleep 5;
+sleep 22;
 kubectl get pod -l run=s3 -o yaml | grep AWS -A2
 
 export url="s3://${s3_bucket_name}"
