@@ -76,7 +76,7 @@ then
 fi
 echo ""
 
-sleep 22;
+sleep 2;
 echo "Get list-attached-role-policies"
 aws iam list-attached-role-policies --role-name ${role_name} | grep $policy_name
 echo "attaching role - $role_name to policy - $policy_name"; 
