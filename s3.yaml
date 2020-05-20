@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         run: s3
+        app: s3
     spec:
       serviceAccountName: s3
       containers:
